@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>✈️ Airline Market Demand Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-attachment: fixed;
+      margin: 0;
+      padding: 2rem;
+      color: #2d3748;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      max-width: 1400px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-control {
+      border-radius: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      font-weight: 600;
+      border-radius: 12px;
+    }
+
+    .alert-info {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .card {
+      border-radius: 16px;
+      border: none;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-title {
+      font-weight: 600;
+    }
+
+    .chart-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-height: 400px;
+      padding-bottom: 1rem;
+    }
+
+    .card-body {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .table {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .table th {
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+      color: white;
+    }
+
+    .progress {
+      height: 8px;
+      background: rgba(102, 126, 234, 0.1);
+      border-radius: 8px;
+    }
+
+    .progress-bar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .sparkle {
+      position: fixed;
+      font-size: 1.2rem;
+      color: gold;
+      pointer-events: none;
+      z-index: 9999;
+      animation: sparkleAnim 2s linear forwards;
+    }
+
+    @keyframes sparkleAnim {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-100px) scale(0.5); }
+    }
+
+    @media (max-width: 768px) {
+      .chart-container {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1><i class="fas fa-plane-departure"></i> Airline Market Demand Dashboard</h1>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <!-- 🔍 Filters -->
+    <form method="get" class="mb-4">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <input type="text" name="origin" class="form-control" placeholder="Filter by Origin Country" value="{{ request.args.get('origin', '') }}">
+        </div>
+        <div class="col-md-5">
+          <input type="text" name="destination" class="form-control" placeholder="Filter by Destination" value="{{ request.args.get('destination', '') }}">
+        </div>
+        <div class="col-md-2 d-grid">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Apply</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- 💡 Summary Insight -->
+    <div class="alert alert-info mb-4">
+      <strong><i class="fas fa-lightbulb"></i> Insight:</strong><br>
+      {{ summary }}
+    </div>
+
+    <!-- 📊 Charts in Cards -->
+    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+
+      <!-- Popular Routes -->
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-route"></i> Popular Routes</h5>
+            <div class="chart-container">
+              {{ chart_routes | safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Trends -->
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-dollar-sign"></i> Price Trends</h5>
+            <div class="chart-container">
+              {{ chart_price | safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- High-Demand Periods -->
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-calendar-alt"></i> High-Demand Periods</h5>
+            <div class="chart-container">
+              {{ chart_demand | safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔢 Top Routes Table -->
+    <div class="table-responsive">
+      <h5 class="mb-3"><i class="fas fa-trophy"></i> Top 10 Routes</h5>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Flights</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in top_routes %}
+          <tr>
+            <td>{{ row.origin_country }}</td>
+            <td>{{ row.destination }}</td>
+            <td>{{ row.count }}</td>
+            <td>
+              <div class="progress">
+                <div class="progress-bar" style="width: {{ ((row.count / top_routes[0].count) * 100) if top_routes else 0 }}%;"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sparkle Effect -->
+  <script>
+    function createSparkle() {
+      const sparkle = document.createElement("div");
+      sparkle.classList.add("sparkle");
+      sparkle.textContent = "✨";
+      sparkle.style.left = Math.random() * window.innerWidth + "px";
+      sparkle.style.top = Math.random() * window.innerHeight + "px";
+      document.body.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), 2000);
+    }
+    setInterval(createSparkle, 3000);
+  </script>
+</body>
+</html>
